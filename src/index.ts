@@ -133,7 +133,7 @@ bot.onText(/^\/bounty (.+)/, (msg, match) => {
       }
       const args = msg.text?.split(" ") ?? [];
       const coins = args[1];
-      const amount = parseCoins(coins ?? "");
+      let amount = parseCoins(coins ?? "");
       const task = args.slice(2).join(" ");
       if (amount.length === 0 || !task) {
         bot.sendMessage(msg.chat.id, "Usage: /bounty <amount><denom> <task>", {
@@ -146,6 +146,10 @@ bot.onText(/^\/bounty (.+)/, (msg, match) => {
           protect_content: true,
         });
         return;
+      }
+      if (amount[0].denom === "PHOTON" || amount[0].denom === "photon") {
+        let newAmount = parseInt(amount[0].amount, 10) * 1000000;
+        amount = parseCoins(newAmount.toString() + " uphoton");
       }
       if (amount[0].denom !== "uphoton") {
         bot.sendMessage(msg.chat.id, "Amount must be in uphoton", {
