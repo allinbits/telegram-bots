@@ -49,7 +49,7 @@ bot.onText(/^\/complete (.+)/, async (msg, match) => {
     }
   }
 });
-bot.onText(/^\/register (.+)/, (msg, match) => {
+bot.onText(/^\/register (.+)/, async (msg, match) => {
   try {
     if (!match) {
       bot.sendMessage(msg.chat.id, "Usage: /register <address>", {
@@ -66,9 +66,18 @@ bot.onText(/^\/register (.+)/, (msg, match) => {
         return;
       }
       registerRecipient(msg.from.username, address);
-      bot.sendMessage(msg.chat.id, `Registered ${address} for @${msg.from.username}`, {
+      const sent = await bot.sendMessage(msg.chat.id, `Registered ${address} for @${msg.from.username}`, {
         protect_content: true,
       });
+      // Delete the confirmation message after a short delay
+      setTimeout(() => {
+        bot.deleteMessage(msg.chat.id, msg.message_id).catch(() => {
+        // ignore deletion errors
+        });
+        bot.deleteMessage(sent.chat.id, sent.message_id).catch(() => {
+          // ignore deletion errors
+        });
+      }, 5000);
     }
   }
   catch (error) {
