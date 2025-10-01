@@ -76,24 +76,44 @@ bot.onText(/^\/register (.+)/, async (msg, match) => {
     else {
       const address = match[1];
       if (!msg.from?.username) {
-        bot.sendMessage(msg.chat.id, "You need a username to register", {
-          protect_content: true,
-        });
+        if (msg.from?.id) {
+          // If the user doesn't have a username, we can use their ID
+          registerRecipient("TGID:" + msg.from.id.toString(), address);
+          const sent = await bot.sendMessage(msg.chat.id, `Registered ${address} for user with ID: ${msg.from.id.toString()}`, {
+            protect_content: true,
+          });
+          // Delete the confirmation message after a short delay
+          setTimeout(() => {
+            bot.deleteMessage(msg.chat.id, msg.message_id).catch(() => {
+            // ignore deletion errors
+            });
+            bot.deleteMessage(sent.chat.id, sent.message_id).catch(() => {
+              // ignore deletion errors
+            });
+          }, 5000);
+        }
+        else {
+          bot.sendMessage(msg.chat.id, "You must have a Telegram username or id to register", {
+            protect_content: true,
+          });
+        }
         return;
       }
-      registerRecipient(msg.from.username, address);
-      const sent = await bot.sendMessage(msg.chat.id, `Registered ${address} for @${msg.from.username}`, {
-        protect_content: true,
-      });
-      // Delete the confirmation message after a short delay
-      setTimeout(() => {
-        bot.deleteMessage(msg.chat.id, msg.message_id).catch(() => {
-        // ignore deletion errors
+      else {
+        registerRecipient(msg.from.username, address);
+        const sent = await bot.sendMessage(msg.chat.id, `Registered ${address} for @${msg.from.username}`, {
+          protect_content: true,
         });
-        bot.deleteMessage(sent.chat.id, sent.message_id).catch(() => {
+        // Delete the confirmation message after a short delay
+        setTimeout(() => {
+          bot.deleteMessage(msg.chat.id, msg.message_id).catch(() => {
           // ignore deletion errors
-        });
-      }, 5000);
+          });
+          bot.deleteMessage(sent.chat.id, sent.message_id).catch(() => {
+            // ignore deletion errors
+          });
+        }, 5000);
+      }
     }
   }
   catch (error) {
@@ -106,7 +126,7 @@ bot.onText(/^\/register (.+)/, async (msg, match) => {
 bot.onText(/^\/bounties/, (msg) => {
   const bounties = getBounties();
   if (bounties.length === 0) {
-    bot.sendMessage(msg.chat.id, "No active bounties\\.", {
+    bot.sendMessage(msg.chat.id, "No active bounties", {
       protect_content: true,
     });
     return;
