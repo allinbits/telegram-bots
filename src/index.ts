@@ -134,11 +134,17 @@ bot.onText(/^\/bounties/, (msg) => {
   else {
     let response = "Active Bounties:\n\n";
     bounties.forEach((bounty: Bounty) => {
+      let amt = bounty.amount;
+      let denom = bounty.denom;
+      if (bounty.denom === "uphoton") {
+        amt = "" + parseInt(bounty.amount) / 1000000;
+        denom = "PHOTON";
+      }
       response += "------------------------------------------------\n";
       response += `ID: ${bounty.id}\n`;
       response += "Task:\n";
       response += `${bounty.task}\n`;
-      response += `Amount: ${bounty.amount} ${bounty.denom}\n\n`;
+      response += `Amount: ${amt} ${denom}\n\n`;
     });
     bot.sendMessage(msg.chat.id, response, {
       protect_content: true,
