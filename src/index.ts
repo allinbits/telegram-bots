@@ -14,9 +14,25 @@ import {
 const bot = new TelegramBot(process.env.TG_TOKEN ?? "", {
   polling: true,
 });
-const owner = process.env.OWNER || "jaekwon777";
+
+const owners: string[] = [];
+
+if (process.env.OWNERS) {
+  owners.push(...process.env.OWNERS.split(","));
+}
+else if (process.env.OWNER) {
+  owners.push(process.env.OWNER);
+}
+else {
+  owners.push("jaekwon777");
+}
+
+const isOwner = (username: string): boolean => {
+  return owners.includes(username);
+};
+
 bot.onText(/^\/complete (.+)/, async (msg, match) => {
-  if (msg.from?.username !== owner) {
+  if (!isOwner(msg.from?.username ?? "")) {
     return;
   }
   else {
@@ -128,7 +144,7 @@ bot.onText(/^\/bountyhelp/, (msg) => {
   });
 });
 bot.onText(/^\/bounty (.+)/, (msg, match) => {
-  if (msg.from?.username !== owner) {
+  if (!isOwner(msg.from?.username ?? "")) {
     return;
   }
   else {
