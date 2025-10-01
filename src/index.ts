@@ -7,7 +7,10 @@ import {
   addBounty,
   Bounty,
   completeBounty,
+  dumpRegistrations,
+  getAddressByUsername,
   getBounties,
+  getUsernameByAddress,
   registerRecipient,
 } from "./db.js";
 
@@ -122,6 +125,81 @@ bot.onText(/^\/register (.+)/, async (msg, match) => {
       protect_content: true,
     });
   }
+});
+bot.onText(/^\/byusername (.+)/, async (msg, match) => {
+  if (!isOwner(msg.from?.username ?? "")) {
+    return;
+  }
+  try {
+    if (!match) {
+      bot.sendMessage(msg.chat.id, "Usage: /byusername <username>", {
+        protect_content: true,
+      });
+      return;
+    }
+    const username = match[1];
+    const address = getAddressByUsername(username);
+    if (address) {
+      bot.sendMessage(msg.chat.id, `@${username} is registered with address ${address}`, {
+        protect_content: true,
+      });
+    }
+    else {
+      bot.sendMessage(msg.chat.id, `@${username} has no registered address`, {
+        protect_content: true,
+      });
+    }
+  }
+  catch (error) {
+    console.error(error);
+    bot.sendMessage(msg.chat.id, "Error occurred", {
+      protect_content: true,
+    });
+  }
+});
+bot.onText(/^\/byaddress (.+)/, async (msg, match) => {
+  if (!isOwner(msg.from?.username ?? "")) {
+    return;
+  }
+  try {
+    if (!match) {
+      bot.sendMessage(msg.chat.id, "Usage: /byaddress <address>", {
+        protect_content: true,
+      });
+      return;
+    }
+    const address = match[1];
+    const username = getUsernameByAddress(address);
+    if (username) {
+      bot.sendMessage(msg.chat.id, `Address ${address} is registered to @${username}`, {
+        protect_content: true,
+      });
+    }
+    else {
+      bot.sendMessage(msg.chat.id, `Address ${address} is not registered`, {
+        protect_content: true,
+      });
+    }
+  }
+  catch (error) {
+    console.error(error);
+    bot.sendMessage(msg.chat.id, "Error occurred", {
+      protect_content: true,
+    });
+  }
+});
+bot.onText(/^\/dump/, (msg) => {
+  if (!isOwner(msg.from?.username ?? "")) {
+    return;
+  }
+  const registrations = dumpRegistrations();
+  let response = "Registered Users:\n\n";
+  registrations.forEach((reg) => {
+    response += `@${reg.username} - ${reg.address}\n`;
+  });
+  bot.sendMessage(msg.chat.id, response, {
+    protect_content: true,
+  });
 });
 bot.onText(/^\/bounties/, (msg) => {
   const bounties = getBounties();
