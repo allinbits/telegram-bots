@@ -1,0 +1,13 @@
+services:
+  telegrambot:
+    build: .
+    environment:
+      - RPC_ENDPOINT=https://atomone-rpc.allinbits.com/
+      - MNEMONIC=
+      - OWNER=jaekwon777
+      - TG_TOKEN=
+    volumes:
+      - bounties:/usr/src/app/bounties
+    restart: unless-stopped
+volumes:
+  bounties:

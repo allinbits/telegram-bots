@@ -9,10 +9,8 @@ import {
   GasPrice,
   SigningStargateClient,
 } from "@cosmjs/stargate";
-import {
-  get,
-} from "http";
-const database = new DatabaseSync("bounties.db");
+
+const database = new DatabaseSync("bounties/bounties.db");
 
 export type Bounty = {
   id: number

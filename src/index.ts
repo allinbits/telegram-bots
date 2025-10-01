@@ -11,10 +11,10 @@ import {
   registerRecipient,
 } from "./db.js";
 
-const bot = new TelegramBot("8458637622:AAEUtYO0fSBdJxZfvcHzQRKwinm6Hfv4nn4", {
+const bot = new TelegramBot(process.env.TG_TOKEN ?? "", {
   polling: true,
 });
-const owner = "clockworkgr";
+const owner = process.env.OWNER || "jaekwon777";
 bot.onText(/\/complete (.+)/, async (msg, match) => {
   if (msg.from?.username !== owner) {
     return;
@@ -135,11 +135,22 @@ bot.onText(/\/bounty (.+)/, (msg, match) => {
       }
       const args = msg.text?.split(" ") ?? [];
       const coins = args[1];
-      console.log(args, coins);
       const amount = parseCoins(coins ?? "");
       const task = args.slice(2).join(" ");
       if (amount.length === 0 || !task) {
         bot.sendMessage(msg.chat.id, "Usage: /bounty <amount><denom> <task>", {
+          protect_content: true,
+        });
+        return;
+      }
+      if (amount[0].amount === "0") {
+        bot.sendMessage(msg.chat.id, "Amount must be greater than 0", {
+          protect_content: true,
+        });
+        return;
+      }
+      if (amount[0].denom !== "uphoton") {
+        bot.sendMessage(msg.chat.id, "Amount must be in uphoton", {
           protect_content: true,
         });
         return;
