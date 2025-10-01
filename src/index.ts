@@ -156,8 +156,8 @@ bot.onText(/^\/bounty (.+)/, (msg, match) => {
         });
         return;
       }
-      if (amount[0].denom === "PHOTON" || amount[0].denom === "photon") {
-        let newAmount = parseInt(amount[0].amount, 10) * 1000000;
+      if (amount[0].denom.toLowerCase() === "photon") {
+        const newAmount = parseInt(amount[0].amount, 10) * 1000000;
         amount = parseCoins(newAmount.toString() + " uphoton");
       }
       if (amount[0].denom !== "uphoton") {
