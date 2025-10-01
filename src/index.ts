@@ -82,22 +82,20 @@ bot.onText(/^\/bounties/, (msg) => {
   const bounties = getBounties();
   if (bounties.length === 0) {
     bot.sendMessage(msg.chat.id, "No active bounties\\.", {
-      parse_mode: "MarkdownV2",
       protect_content: true,
     });
     return;
   }
   else {
-    let response = "*Active Bounties:*\n\n";
+    let response = "Active Bounties:\n\n";
     bounties.forEach((bounty: Bounty) => {
-      response += "\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\n";
-      response += `*ID:* ${bounty.id}\n`;
-      response += "*Task:*\n";
-      response += `_${bounty.task}_\n`;
-      response += `*Amount:* ${bounty.amount} ${bounty.denom}\n\n`;
+      response += "------------------------------------------------\n";
+      response += `ID: ${bounty.id}\n`;
+      response += "Task:\n";
+      response += `${bounty.task}\n`;
+      response += `Amount: ${bounty.amount} ${bounty.denom}\n\n`;
     });
     bot.sendMessage(msg.chat.id, response, {
-      parse_mode: "MarkdownV2",
       protect_content: true,
     });
   }
