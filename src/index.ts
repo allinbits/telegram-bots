@@ -15,7 +15,7 @@ const bot = new TelegramBot(process.env.TG_TOKEN ?? "", {
   polling: true,
 });
 const owner = process.env.OWNER || "jaekwon777";
-bot.onText(/\/complete (.+)/, async (msg, match) => {
+bot.onText(/^\/complete (.+)/, async (msg, match) => {
   if (msg.from?.username !== owner) {
     return;
   }
@@ -49,7 +49,7 @@ bot.onText(/\/complete (.+)/, async (msg, match) => {
     }
   }
 });
-bot.onText(/\/register (.+)/, (msg, match) => {
+bot.onText(/^\/register (.+)/, (msg, match) => {
   try {
     if (!match) {
       bot.sendMessage(msg.chat.id, "Usage: /register <address>", {
@@ -78,7 +78,7 @@ bot.onText(/\/register (.+)/, (msg, match) => {
     });
   }
 });
-bot.onText(/\/bounties/, (msg) => {
+bot.onText(/^\/bounties/, (msg) => {
   const bounties = getBounties();
   if (bounties.length === 0) {
     bot.sendMessage(msg.chat.id, "No active bounties\\.", {
@@ -102,7 +102,7 @@ bot.onText(/\/bounties/, (msg) => {
     });
   }
 });
-bot.onText(/\/bountyhelp/, (msg) => {
+bot.onText(/^\/bountyhelp/, (msg) => {
   let response = "Hi, I'm the Atone bounty bot. I 'm here to help organize bounties and pay them out.\n\n";
   response += "Commands:\n";
   response += "/bounties\n";
@@ -120,7 +120,7 @@ bot.onText(/\/bountyhelp/, (msg) => {
     protect_content: true,
   });
 });
-bot.onText(/\/bounty (.+)/, (msg, match) => {
+bot.onText(/^\/bounty (.+)/, (msg, match) => {
   if (msg.from?.username !== owner) {
     return;
   }
