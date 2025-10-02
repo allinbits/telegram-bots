@@ -7,16 +7,35 @@ import {
   addBounty,
   Bounty,
   completeBounty,
+  dumpRegistrations,
+  getAddressByUsername,
   getBounties,
+  getUsernameByAddress,
   registerRecipient,
 } from "./db.js";
 
 const bot = new TelegramBot(process.env.TG_TOKEN ?? "", {
   polling: true,
 });
-const owner = process.env.OWNER || "jaekwon777";
+
+const owners: string[] = [];
+
+if (process.env.OWNERS) {
+  owners.push(...process.env.OWNERS.split(","));
+}
+else if (process.env.OWNER) {
+  owners.push(process.env.OWNER);
+}
+else {
+  owners.push("jaekwon777");
+}
+
+const isOwner = (username: string): boolean => {
+  return owners.includes(username);
+};
+
 bot.onText(/^\/complete (.+)/, async (msg, match) => {
-  if (msg.from?.username !== owner) {
+  if (!isOwner(msg.from?.username ?? "")) {
     return;
   }
   else {
@@ -60,24 +79,44 @@ bot.onText(/^\/register (.+)/, async (msg, match) => {
     else {
       const address = match[1];
       if (!msg.from?.username) {
-        bot.sendMessage(msg.chat.id, "You need a username to register", {
-          protect_content: true,
-        });
+        if (msg.from?.id) {
+          // If the user doesn't have a username, we can use their ID
+          registerRecipient("TGID:" + msg.from.id.toString(), address);
+          const sent = await bot.sendMessage(msg.chat.id, `Registered ${address} for user with ID: ${msg.from.id.toString()}`, {
+            protect_content: true,
+          });
+          // Delete the confirmation message after a short delay
+          setTimeout(() => {
+            bot.deleteMessage(msg.chat.id, msg.message_id).catch(() => {
+            // ignore deletion errors
+            });
+            bot.deleteMessage(sent.chat.id, sent.message_id).catch(() => {
+              // ignore deletion errors
+            });
+          }, 5000);
+        }
+        else {
+          bot.sendMessage(msg.chat.id, "You must have a Telegram username or id to register", {
+            protect_content: true,
+          });
+        }
         return;
       }
-      registerRecipient(msg.from.username, address);
-      const sent = await bot.sendMessage(msg.chat.id, `Registered ${address} for @${msg.from.username}`, {
-        protect_content: true,
-      });
-      // Delete the confirmation message after a short delay
-      setTimeout(() => {
-        bot.deleteMessage(msg.chat.id, msg.message_id).catch(() => {
-        // ignore deletion errors
+      else {
+        registerRecipient(msg.from.username, address);
+        const sent = await bot.sendMessage(msg.chat.id, `Registered ${address} for @${msg.from.username}`, {
+          protect_content: true,
         });
-        bot.deleteMessage(sent.chat.id, sent.message_id).catch(() => {
+        // Delete the confirmation message after a short delay
+        setTimeout(() => {
+          bot.deleteMessage(msg.chat.id, msg.message_id).catch(() => {
           // ignore deletion errors
-        });
-      }, 5000);
+          });
+          bot.deleteMessage(sent.chat.id, sent.message_id).catch(() => {
+            // ignore deletion errors
+          });
+        }, 5000);
+      }
     }
   }
   catch (error) {
@@ -87,10 +126,85 @@ bot.onText(/^\/register (.+)/, async (msg, match) => {
     });
   }
 });
+bot.onText(/^\/byusername (.+)/, async (msg, match) => {
+  if (!isOwner(msg.from?.username ?? "")) {
+    return;
+  }
+  try {
+    if (!match) {
+      bot.sendMessage(msg.chat.id, "Usage: /byusername <username>", {
+        protect_content: true,
+      });
+      return;
+    }
+    const username = match[1];
+    const address = getAddressByUsername(username);
+    if (address) {
+      bot.sendMessage(msg.chat.id, `@${username} is registered with address ${address}`, {
+        protect_content: true,
+      });
+    }
+    else {
+      bot.sendMessage(msg.chat.id, `@${username} has no registered address`, {
+        protect_content: true,
+      });
+    }
+  }
+  catch (error) {
+    console.error(error);
+    bot.sendMessage(msg.chat.id, "Error occurred", {
+      protect_content: true,
+    });
+  }
+});
+bot.onText(/^\/byaddress (.+)/, async (msg, match) => {
+  if (!isOwner(msg.from?.username ?? "")) {
+    return;
+  }
+  try {
+    if (!match) {
+      bot.sendMessage(msg.chat.id, "Usage: /byaddress <address>", {
+        protect_content: true,
+      });
+      return;
+    }
+    const address = match[1];
+    const username = getUsernameByAddress(address);
+    if (username) {
+      bot.sendMessage(msg.chat.id, `Address ${address} is registered to @${username}`, {
+        protect_content: true,
+      });
+    }
+    else {
+      bot.sendMessage(msg.chat.id, `Address ${address} is not registered`, {
+        protect_content: true,
+      });
+    }
+  }
+  catch (error) {
+    console.error(error);
+    bot.sendMessage(msg.chat.id, "Error occurred", {
+      protect_content: true,
+    });
+  }
+});
+bot.onText(/^\/dump/, (msg) => {
+  if (!isOwner(msg.from?.username ?? "")) {
+    return;
+  }
+  const registrations = dumpRegistrations();
+  let response = "Registered Users:\n\n";
+  registrations.forEach((reg) => {
+    response += `@${reg.username} - ${reg.address}\n`;
+  });
+  bot.sendMessage(msg.chat.id, response, {
+    protect_content: true,
+  });
+});
 bot.onText(/^\/bounties/, (msg) => {
   const bounties = getBounties();
   if (bounties.length === 0) {
-    bot.sendMessage(msg.chat.id, "No active bounties\\.", {
+    bot.sendMessage(msg.chat.id, "No active bounties", {
       protect_content: true,
     });
     return;
@@ -98,11 +212,17 @@ bot.onText(/^\/bounties/, (msg) => {
   else {
     let response = "Active Bounties:\n\n";
     bounties.forEach((bounty: Bounty) => {
+      let amt = bounty.amount;
+      let denom = bounty.denom;
+      if (bounty.denom === "uphoton") {
+        amt = "" + parseInt(bounty.amount) / 1000000;
+        denom = "PHOTON";
+      }
       response += "------------------------------------------------\n";
       response += `ID: ${bounty.id}\n`;
       response += "Task:\n";
       response += `${bounty.task}\n`;
-      response += `Amount: ${bounty.amount} ${bounty.denom}\n\n`;
+      response += `Amount: ${amt} ${denom}\n\n`;
     });
     bot.sendMessage(msg.chat.id, response, {
       protect_content: true,
@@ -128,7 +248,7 @@ bot.onText(/^\/bountyhelp/, (msg) => {
   });
 });
 bot.onText(/^\/bounty (.+)/, (msg, match) => {
-  if (msg.from?.username !== owner) {
+  if (!isOwner(msg.from?.username ?? "")) {
     return;
   }
   else {

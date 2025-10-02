@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS recipients (
   username TEXT NOT NULL,
   address TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_recipients_username ON recipients (username);
+CREATE INDEX IF NOT EXISTS idx_recipients_address ON recipients (address);
 `;
 
 database.exec(initDatabase);
@@ -46,6 +48,19 @@ export const addBounty = (amount: string, denom: string, task: string) => {
   const createdAt = Date.now();
   database.prepare("INSERT INTO bounties (amount, denom, task, completed, created_at) VALUES (?, ?, ?, ?, ?)").run(amount, denom, task, 0, createdAt);
   return database.prepare("SELECT last_insert_rowid() as id")?.get()?.id || null;
+};
+export const getAddressByUsername = (username: string) => {
+  return database.prepare("SELECT * FROM recipients WHERE username = ?").get(username)?.address || null;
+};
+export const getUsernameByAddress = (address: string) => {
+  return database.prepare("SELECT * FROM recipients WHERE address = ?").get(address)?.username || null;
+};
+export const dumpRegistrations = () => {
+  return database.prepare("SELECT * FROM recipients").all() as unknown as {
+    id: number
+    username: string
+    address: string
+  }[];
 };
 export const getBounties = () => {
   return database.prepare("SELECT * FROM bounties WHERE completed = 0").all() as unknown as Bounty[];
