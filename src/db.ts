@@ -55,6 +55,12 @@ export const getAddressByUsername = (username: string) => {
 export const getUsernameByAddress = (address: string) => {
   return database.prepare("SELECT * FROM recipients WHERE address = ?").get(address)?.username || null;
 };
+export const deleteBounty = (id: number) => {
+  database.prepare("DELETE FROM bounties WHERE id = ?").run(id);
+};
+export const updateBountyAmount = (id: number, amount: string, denom: string) => {
+  database.prepare("UPDATE bounties SET amount = ?, denom = ? WHERE id = ?").run(amount, denom, id);
+};
 export const dumpRegistrations = () => {
   return database.prepare("SELECT * FROM recipients").all() as unknown as {
     id: number

@@ -7,11 +7,13 @@ import {
   addBounty,
   Bounty,
   completeBounty,
+  deleteBounty,
   dumpRegistrations,
   getAddressByUsername,
   getBounties,
   getUsernameByAddress,
   registerRecipient,
+  updateBountyAmount,
 } from "./db.js";
 
 const bot = new TelegramBot(process.env.TG_TOKEN ?? "", {
@@ -57,6 +59,39 @@ bot.onText(/^\/complete (.+)/, async (msg, match) => {
       }
       const hash = await completeBounty(bountyId, username);
       bot.sendMessage(msg.chat.id, `Bounty ${bountyId} marked as completed and paid to @${username}\n\nTransaction: https://www.mintscan.io/atomone/tx/${hash}`, {
+        protect_content: true,
+      });
+    }
+    catch (error) {
+      console.error(error);
+      bot.sendMessage(msg.chat.id, `Error: ${(error as Error).message}`, {
+        protect_content: true,
+      });
+    }
+  }
+});
+bot.onText(/^\/delete (.+)/, async (msg, match) => {
+  if (!isOwner(msg.from?.username ?? "")) {
+    return;
+  }
+  else {
+    try {
+      if (!match) {
+        bot.sendMessage(msg.chat.id, "Usage: /delete <bounty_id>", {
+          protect_content: true,
+        });
+        return;
+      }
+      const args = msg.text?.split(" ") ?? [];
+      const bountyId = parseInt(args[1]);
+      if (isNaN(bountyId)) {
+        bot.sendMessage(msg.chat.id, "Usage: /delete <bounty_id>", {
+          protect_content: true,
+        });
+        return;
+      }
+      deleteBounty(bountyId);
+      bot.sendMessage(msg.chat.id, `Bounty ${bountyId} deleted`, {
         protect_content: true,
       });
     }
@@ -295,6 +330,64 @@ bot.onText(/^\/bounty (.+)/, (msg, match) => {
     catch (error) {
       console.error(error);
       bot.sendMessage(msg.chat.id, "Usage: /bounty <amount><denom> <task>", {
+        protect_content: true,
+      });
+    }
+  }
+});
+
+bot.onText(/^\/update (.+)/, (msg, match) => {
+  if (!isOwner(msg.from?.username ?? "")) {
+    return;
+  }
+  else {
+    try {
+      if (!match) {
+        bot.sendMessage(msg.chat.id, "Usage: /update <bounty_id> <amount><denom>", {
+          protect_content: true,
+        });
+        return;
+      }
+      const args = msg.text?.split(" ") ?? [];
+      const bountyId = parseInt(args[1]);
+      if (isNaN(bountyId)) {
+        bot.sendMessage(msg.chat.id, "Invalid bounty ID", {
+          protect_content: true,
+        });
+        return;
+      }
+      const coins = args[2];
+      let amount = parseCoins(coins ?? "");
+      if (amount.length === 0) {
+        bot.sendMessage(msg.chat.id, "Usage: /update <bounty_id> <amount><denom>", {
+          protect_content: true,
+        });
+        return;
+      }
+      if (amount[0].amount === "0") {
+        bot.sendMessage(msg.chat.id, "Amount must be greater than 0", {
+          protect_content: true,
+        });
+        return;
+      }
+      if (amount[0].denom.toLowerCase() === "photon") {
+        const newAmount = parseInt(amount[0].amount, 10) * 1000000;
+        amount = parseCoins(newAmount.toString() + " uphoton");
+      }
+      if (amount[0].denom !== "uphoton") {
+        bot.sendMessage(msg.chat.id, "Amount must be in uphoton", {
+          protect_content: true,
+        });
+        return;
+      }
+      updateBountyAmount(bountyId, amount[0].amount, amount[0].denom);
+      bot.sendMessage(msg.chat.id, `Bounty with ID: ${bountyId} updated`, {
+        protect_content: true,
+      });
+    }
+    catch (error) {
+      console.error(error);
+      bot.sendMessage(msg.chat.id, "Usage: /update <bounty_id> <amount><denom>", {
         protect_content: true,
       });
     }
