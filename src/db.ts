@@ -33,6 +33,11 @@ CREATE TABLE IF NOT EXISTS bounties (
   completed_at INTEGER,
   recipient TEXT
 );
+CREATE TABLE IF NOT EXISTS channels (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  link TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS recipients (
   id INTEGER PRIMARY KEY,
   username TEXT NOT NULL,
@@ -47,6 +52,10 @@ database.exec(initDatabase);
 export const addBounty = (amount: string, denom: string, task: string) => {
   const createdAt = Date.now();
   database.prepare("INSERT INTO bounties (amount, denom, task, completed, created_at) VALUES (?, ?, ?, ?, ?)").run(amount, denom, task, 0, createdAt);
+  return database.prepare("SELECT last_insert_rowid() as id")?.get()?.id || null;
+};
+export const addChannel = (name: string, link: string) => {
+  database.prepare("INSERT INTO channels (name, link) VALUES (?, ?)").run(name, link);
   return database.prepare("SELECT last_insert_rowid() as id")?.get()?.id || null;
 };
 export const getAddressByUsername = (username: string) => {
@@ -70,6 +79,13 @@ export const dumpRegistrations = () => {
 };
 export const getBounties = () => {
   return database.prepare("SELECT * FROM bounties WHERE completed = 0").all() as unknown as Bounty[];
+};
+export const getChannels = () => {
+  return database.prepare("SELECT * FROM channels").all() as unknown as {
+    id: number
+    name: string
+    link: string
+  }[];
 };
 export const getBounty = (id: number) => {
   return database.prepare("SELECT * FROM bounties WHERE id = ?").get(id) as unknown as Bounty | undefined;

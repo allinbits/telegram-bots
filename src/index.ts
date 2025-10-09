@@ -264,6 +264,31 @@ bot.onText(/^\/bounties/, (msg) => {
     });
   }
 });
+
+bot.onText(/^\/channels/, (msg) => {
+  /*
+  const channels = getChannels();
+  if (channels.length === 0) {
+    bot.sendMessage(msg.chat.id, "No active channels", {
+      protect_content: true,
+    });
+    return;
+  }
+  else {
+  */
+  const response = `This channel will begin splitting into sepate groups. It is a work in progress, please stay tuned. Here are the current groups:
+
+1. $ATONE 144,000!: main channel. Command center for AtomOne and gno.land - https://t.me/+HwiCPxZa58kzNTJh
+2. $ATONE PARANORMAL! - https://t.me/+igbS2FqSyEdkMmQx
+3. $ATONE PRICE! - https://t.me/+cVZ8Nhn7GHwwOGMx
+4. $ATONE GEOPOLITICS! - https://t.me/+jwoTxS4JoUg4M2Ux
+5. $ATONE GOD/FATHER/ABBAH/ALLAH/JESUS! - https://t.me/+Q3LsSoGUEb85YTA5
+
+Beware, the beast makes fake $ATONE channels to mislead users. If you see any, please report them to the main channel.`;
+  bot.sendMessage(msg.chat.id, response, {
+    protect_content: true,
+  });
+});
 bot.onText(/^\/bountyhelp/, (msg) => {
   let response = "Hi, I'm the Atone bounty bot. I 'm here to help organize bounties and pay them out.\n\n";
   response += "Commands:\n";
