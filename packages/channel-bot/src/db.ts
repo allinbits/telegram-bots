@@ -6,6 +6,13 @@ import {
   DatabaseSync,
 } from "node:sqlite";
 
+// Define the Channel type
+export type Channel = {
+  id?: number
+  name: string
+  url: string
+};
+
 export class ChannelDB {
   private database: DatabaseSync;
 
@@ -26,22 +33,14 @@ CREATE TABLE IF NOT EXISTS channels (
     this.database.exec(init);
   }
 
-  public getChannels(): {
-    id: number
-    name: string
-    url: string
-  }[] {
-    return this.database.prepare("SELECT id, name, url FROM channels ORDER BY name").all() as {
-      id: number
-      name: string
-      url: string
-    }[];
+  public getChannels(): Channel[] {
+    return this.database.prepare("SELECT id, name, url FROM channels ORDER BY id").all() as Channel[];
   }
 
-  public addChannel(name: string, url: string): number | null {
+  public addChannel(channel: Channel): number | null {
     const row = this.database.prepare(
       "INSERT INTO channels (name, url) VALUES (?, ?) RETURNING id",
-    ).get(name, url) as {
+    ).get(channel.name, channel.url) as {
       id?: unknown
     } | undefined;
     const idValue = row?.id;

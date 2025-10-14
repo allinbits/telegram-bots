@@ -1,6 +1,10 @@
-import { DatabaseSync } from "node:sqlite";
-import { mkdirSync } from "node:fs";
+import {
+  mkdirSync,
+} from "node:fs";
 import path from "node:path";
+import {
+  DatabaseSync,
+} from "node:sqlite";
 
 export type Bounty = {
   id: number
@@ -18,7 +22,9 @@ export class BountyDB {
 
   constructor() {
     const databasePath = process.env.BOUNTY_DATABASE_FILE || "data/bounties.db";
-    mkdirSync(path.dirname(databasePath), { recursive: true });
+    mkdirSync(path.dirname(databasePath), {
+      recursive: true,
+    });
 
     this.database = new DatabaseSync(databasePath);
     const initDatabase = `
@@ -45,8 +51,10 @@ CREATE TABLE IF NOT EXISTS recipients (
   public addBounty(amount: string, denom: string, task: string): number | null {
     const createdAt = Date.now();
     const row = this.database.prepare(
-      "INSERT INTO bounties (amount, denom, task, completed, created_at) VALUES (?, ?, ?, ?, ?) RETURNING id"
-    ).get(amount, denom, task, 0, createdAt) as { id?: unknown } | undefined;
+      "INSERT INTO bounties (amount, denom, task, completed, created_at) VALUES (?, ?, ?, ?, ?) RETURNING id",
+    ).get(amount, denom, task, 0, createdAt) as {
+      id?: unknown
+    } | undefined;
     const idValue = row?.id;
     return idValue == null ? null : Number(idValue);
   }
@@ -82,7 +90,9 @@ CREATE TABLE IF NOT EXISTS recipients (
   }
 
   public getRecipientByUsername(username: string): string | null {
-    const row = this.database.prepare("SELECT * FROM recipients WHERE username = ?").get(username) as { address?: unknown } | undefined;
+    const row = this.database.prepare("SELECT * FROM recipients WHERE username = ?").get(username) as {
+      address?: unknown
+    } | undefined;
     const value = row?.address;
     return value == null ? null : String(value);
   }
@@ -92,13 +102,21 @@ CREATE TABLE IF NOT EXISTS recipients (
   }
 
   public getUsernameByAddress(address: string): string | null {
-    const row = this.database.prepare("SELECT * FROM recipients WHERE address = ?").get(address) as { username?: unknown } | undefined;
+    const row = this.database.prepare("SELECT * FROM recipients WHERE address = ?").get(address) as {
+      username?: unknown
+    } | undefined;
     const value = row?.username;
     return value == null ? null : String(value);
   }
 
-  public dumpRegistrations(): { username: string; address: string }[] {
-    return this.database.prepare("SELECT username, address FROM recipients ORDER BY username").all() as { username: string; address: string }[];
+  public dumpRegistrations(): {
+    username: string
+    address: string
+  }[] {
+    return this.database.prepare("SELECT username, address FROM recipients ORDER BY username").all() as {
+      username: string
+      address: string
+    }[];
   }
 
   public markBountyCompleted(id: number, recipient: string): void {

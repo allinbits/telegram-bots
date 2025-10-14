@@ -1,11 +1,18 @@
-import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { GasPrice, SigningStargateClient, DeliverTxResponse, Coin } from "@cosmjs/stargate";
+import {
+  DirectSecp256k1HdWallet,
+} from "@cosmjs/proto-signing";
+import {
+  Coin, DeliverTxResponse, GasPrice, SigningStargateClient,
+} from "@cosmjs/stargate";
 
 export type SendTokensOptions = {
-  gasPrice?: string; // e.g. "0.025uphoton"
-  gas?: string; // e.g. "100000"
-  memo?: string;
-  feeAmount?: { amount: string; denom: string }[];
+  gasPrice?: string // e.g. "0.025uphoton"
+  gas?: string // e.g. "100000"
+  memo?: string
+  feeAmount?: {
+    amount: string
+    denom: string
+  }[]
 };
 
 export class CosmosClient {
@@ -23,18 +30,27 @@ export class CosmosClient {
     recipientAddress: string,
     amount: Coin[],
     options?: SendTokensOptions,
-  ): Promise<{ txHash: string; raw: DeliverTxResponse }>
-  {
+  ): Promise<{
+    txHash: string
+    raw: DeliverTxResponse
+  }> {
     const signer = await DirectSecp256k1HdWallet.fromMnemonic(this.mnemonic, {
       prefix: this.addressPrefix,
     });
     const [account] = await signer.getAccounts();
 
     const gasPrice = GasPrice.fromString(options?.gasPrice || "0.025uphoton");
-    const client = await SigningStargateClient.connectWithSigner(this.rpcEndpoint, signer, { gasPrice });
+    const client = await SigningStargateClient.connectWithSigner(this.rpcEndpoint, signer, {
+      gasPrice,
+    });
 
     const fee = {
-      amount: options?.feeAmount || [{ amount: "22500", denom: "uphoton" }],
+      amount: options?.feeAmount || [
+        {
+          amount: "22500",
+          denom: "uphoton",
+        },
+      ],
       gas: options?.gas || "100000",
     };
 
@@ -45,6 +61,9 @@ export class CosmosClient {
       throw new Error(`Failed to send tokens: ${result.rawLog}`);
     }
 
-    return { txHash: result.transactionHash, raw: result };
+    return {
+      txHash: result.transactionHash,
+      raw: result,
+    };
   }
 }

@@ -96,7 +96,7 @@ export class ChannelBot {
       await this.bot.setMyCommands(commandsForTelegram, {
         scope: {
           type: "all_private_chats",
-        } as any,
+        } as TelegramBot.BotCommandScope,
       });
       await this.bot.setMyCommands(commandsForTelegram, {
         scope: {
@@ -117,30 +117,35 @@ export class ChannelBot {
       });
       return;
     }
-    let response = "Channels:\n\n";
+    let response = "Channels:\n";
     for (const ch of channels) {
       response += `ID: ${ch.id}\nName: ${ch.name}\nURL: ${ch.url}\n`;
       response += "----------------------------------------\n";
     }
     this.bot.sendMessage(msg.chat.id, response, {
+      parse_mode: "Markdown",
+      disable_web_page_preview: true,
       protect_content: true,
     });
   };
 
-  private onAddChannel = (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
+  private onAddChannel = (msg: TelegramBot.Message, _match: RegExpExecArray | null) => {
     const args = msg.text?.split(" ") ?? [];
     const name = args[1];
     const url = args[2];
     if (!name || !url) {
       throw new Error("name or url is empty");
     }
-    const id = channelDB.addChannel(name, url);
+    const id = channelDB.addChannel({
+      name,
+      url,
+    });
     this.bot.sendMessage(msg.chat.id, `Added channel ${name} (ID: ${id})`, {
       protect_content: true,
     });
   };
 
-  private onRemoveChannel = (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
+  private onRemoveChannel = (msg: TelegramBot.Message, _match: RegExpExecArray | null) => {
     const args = msg.text?.split(" ") ?? [];
     const channelId = parseInt(args[1]);
     if (isNaN(channelId)) {
