@@ -4,6 +4,7 @@ services:
     environment:
       - RPC_ENDPOINT=https://atomone-rpc.allinbits.com/
       - MNEMONIC=
+      - OWNERS=
       - OWNER=jaekwon777
       - TG_TOKEN=
     volumes:
