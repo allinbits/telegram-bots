@@ -101,7 +101,7 @@ export class ChannelBot {
       await this.bot.setMyCommands(commandsForTelegram, {
         scope: {
           type: "all_group_chats",
-        } as any,
+        } as TelegramBot.BotCommandScope,
       });
     }
     catch (err) {

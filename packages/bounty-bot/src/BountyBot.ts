@@ -148,12 +148,12 @@ export class BountyBot {
       await this.bot.setMyCommands(commandsForTelegram, {
         scope: {
           type: "all_private_chats",
-        } as any,
+        } as TelegramBot.BotCommandScope,
       });
       await this.bot.setMyCommands(commandsForTelegram, {
         scope: {
           type: "all_group_chats",
-        } as any,
+        } as TelegramBot.BotCommandScope,
       });
     }
     catch (err) {
@@ -165,7 +165,7 @@ export class BountyBot {
    * Create a new bounty from a message command
    * Expected format: /bounty <amount><denom> <task>
    */
-  private onCreateBounty = (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
+  private onCreateBounty = (msg: TelegramBot.Message, _match: RegExpExecArray | null) => {
     const args = msg.text?.split(" ") ?? [];
     const coins = args[1];
     let amount = parseCoins(coins ?? "");
@@ -195,7 +195,7 @@ export class BountyBot {
    * Complete a bounty and trigger on-chain payment
    * Expected format: /bounty_complete <bounty_id> <username>
    */
-  private onCompleteBounty = async (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
+  private onCompleteBounty = async (msg: TelegramBot.Message, _match: RegExpExecArray | null) => {
     const args = msg.text?.split(" ") ?? [];
     const bountyId = parseInt(args[1]);
     const username = args[2]?.replace("@", "");
