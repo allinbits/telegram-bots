@@ -1,14 +1,31 @@
+volumes:
+  bounties:
+  channels:
+
 services:
-  telegrambot:
-    build: .
+  bountybot:
+    image: ghcr.io/allinbits/telegram-bots/bountybot:dev
+    build:
+      context: .
+      target: bountybot
+    restart: unless-stopped
     environment:
       - RPC_ENDPOINT=https://atomone-rpc.allinbits.com/
       - MNEMONIC=
-      - OWNERS=
-      - OWNER=jaekwon777
+      - OWNERS=jaekwon777,albttx,clockworkgr
       - TG_TOKEN=
-    volumes:
-      - bounties:/usr/src/app/bounties
+    # volumes:
+    #   - bounties:/usr/src/app/data
+
+  channelbot:
+    image: ghcr.io/allinbits/telegram-bots/channelbot:dev
+    build:
+      context: .
+      target: channelbot
     restart: unless-stopped
-volumes:
-  bounties:
+    environment:
+      - OWNERS=jaekwon777,albttx,clockworkgr
+      - TG_TOKEN=
+      - CHANNELS_DATABASE_FILE=data/channels.db
+    # volumes:
+    #   - channels:/usr/src/app/data

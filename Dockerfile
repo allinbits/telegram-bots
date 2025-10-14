@@ -1,38 +1,35 @@
-# syntax=docker.io/docker/dockerfile:1.7-labs
+FROM node:22-alpine3.22 AS build
 
-FROM node:22-alpine3.22 AS builder
-
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /usr/src/app
 
-COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
-COPY packages/bounty-bot/package.json packages/bounty-bot/package.json
-COPY packages/bounty-bot/tsconfig.json packages/bounty-bot/tsconfig.json
+COPY . /usr/src/app
 
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
-COPY . .
+RUN pnpm run -r build
+RUN pnpm deploy --filter=@allinbits/bounty-bot --prod /prod/bounty-bot
+RUN pnpm deploy --filter=@allinbits/channel-bot --prod /prod/channel-bot
 
-RUN pnpm --filter @allinbits/bounty-bot run build
 
-# Final image
-FROM node:22-alpine3.22
-
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-WORKDIR /usr/src/app
-
-COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
-COPY packages/bounty-bot/package.json packages/bounty-bot/package.json
-
-RUN pnpm install --frozen-lockfile --prod --filter @allinbits/bounty-bot...
-
-COPY --from=builder /usr/src/app/packages/bounty-bot/dist ./packages/bounty-bot/dist
-
-ENV MNEMONIC=""  
+# BountyBot
+FROM build AS bountybot
+WORKDIR /app
+COPY --from=build /prod/bounty-bot /app
+ENV MNEMONIC=""
 ENV RPC_ENDPOINT="https://atomone-rpc.allinbits.com/"
-ENV OWNER="jaekwon777"
+ENV OWNERS=""
 ENV TG_TOKEN=""
+ENTRYPOINT ["node", "dist/index.js"]
 
-ENTRYPOINT ["node", "packages/bounty-bot/dist/index.js" ]
+# ChannelBot
+FROM build AS channelbot
+WORKDIR /app
+COPY --from=build /prod/channel-bot /app
+ENV TG_TOKEN=""
+ENV OWNERS=""
+ENTRYPOINT ["node", "dist/index.js"]
