@@ -9,11 +9,12 @@ services:
       context: .
       target: bountybot
     restart: unless-stopped
+    tty: true
     environment:
-      - RPC_ENDPOINT=https://atomone-rpc.allinbits.com/
-      - MNEMONIC=
-      - OWNERS=jaekwon777,albttx,clockworkgr
-      - TG_TOKEN=
+      RPC_ENDPOINT: https://atomone-rpc.allinbits.com/
+      MNEMONIC: 
+      OWNERS: jaekwon777,albttx,clockworkgr
+      TG_TOKEN: 8303646007:AAHC4EpM_4G2Fb1cvvdqYzn5NtAiMd2d0RQ
     # volumes:
     #   - bounties:/usr/src/app/data
 
@@ -23,9 +24,11 @@ services:
       context: .
       target: channelbot
     restart: unless-stopped
+    tty: true
     environment:
-      - OWNERS=jaekwon777,albttx,clockworkgr
-      - TG_TOKEN=
-      - CHANNELS_DATABASE_FILE=data/channels.db
+      OWNERS: jaekwon777,albttx,clockworkgr
+      # TG_TOKEN: ""
+      TG_TOKEN: 8303646007:AAHC4EpM_4G2Fb1cvvdqYzn5NtAiMd2d0RQ
+      CHANNELS_DATABASE_FILE: data/channels.db
     # volumes:
     #   - channels:/usr/src/app/data

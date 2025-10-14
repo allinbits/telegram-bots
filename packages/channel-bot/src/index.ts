@@ -1,6 +1,6 @@
 import {
   ChannelBot,
-} from "./ChannelBot.js";
+} from "./ChannelBot.ts";
 
 async function main() {
   const token = process.env.TG_TOKEN ?? "";

@@ -9,7 +9,7 @@ import {
 // Define the Channel type
 export type Channel = {
   id?: number
-  name: string
+  description: string
   url: string
 };
 
@@ -26,7 +26,7 @@ export class ChannelDB {
     const init = `
 CREATE TABLE IF NOT EXISTS channels (
   id INTEGER PRIMARY KEY,
-  name TEXT NOT NULL,
+  description TEXT NOT NULL,
   url TEXT NOT NULL
 );
 `;
@@ -34,13 +34,13 @@ CREATE TABLE IF NOT EXISTS channels (
   }
 
   public getChannels(): Channel[] {
-    return this.database.prepare("SELECT id, name, url FROM channels ORDER BY id").all() as Channel[];
+    return this.database.prepare("SELECT id, description, url FROM channels ORDER BY id").all() as Channel[];
   }
 
   public addChannel(channel: Channel): number | null {
     const row = this.database.prepare(
-      "INSERT INTO channels (name, url) VALUES (?, ?) RETURNING id",
-    ).get(channel.name, channel.url) as {
+      "INSERT INTO channels (description, url) VALUES (?, ?) RETURNING id",
+    ).get(channel.description, channel.url) as {
       id?: unknown
     } | undefined;
     const idValue = row?.id;

@@ -5,10 +5,10 @@ import TelegramBot from "node-telegram-bot-api";
 
 import {
   CosmosClient,
-} from "./CosmosClient.js";
+} from "./CosmosClient.ts";
 import {
   Bounty, bountyDB,
-} from "./db.js";
+} from "./db.ts";
 
 export type BountyBotOptions = {
   token: string

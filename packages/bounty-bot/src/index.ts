@@ -1,6 +1,6 @@
 import {
   BountyBot,
-} from "./BountyBot.js";
+} from "./BountyBot.ts";
 
 async function main() {
   const token = process.env.TG_TOKEN ?? "";

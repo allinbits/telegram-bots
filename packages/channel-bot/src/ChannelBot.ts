@@ -2,7 +2,7 @@ import TelegramBot from "node-telegram-bot-api";
 
 import {
   channelDB,
-} from "./db.js";
+} from "./db.ts";
 
 export type ChannelBotOptions = {
   token: string
@@ -41,7 +41,7 @@ export class ChannelBot {
         command: "channels_add",
         description: "Add channel (owners only)",
         regex: /^\/channels_add (.+)/,
-        usage: "Usage: /channels_add <name> <url>",
+        usage: "Usage: /channels_add <url> <description...>",
         function: this.onAddChannel,
         ownerOnly: true,
       },
@@ -119,9 +119,9 @@ export class ChannelBot {
     }
     let response = "Channels:\n";
     for (const ch of channels) {
-      response += `ID: ${ch.id}\nName: ${ch.name}\nURL: ${ch.url}\n`;
-      response += "----------------------------------------\n";
+      response += `${ch.id}. ${ch.description}\n${ch.url}\n`;
     }
+    response += "\nBeware, the beast makes fake $ATONE channels to mislead users. If you see any, please report them to the main channel.";
     this.bot.sendMessage(msg.chat.id, response, {
       parse_mode: "Markdown",
       disable_web_page_preview: true,
@@ -130,17 +130,17 @@ export class ChannelBot {
   };
 
   private onAddChannel = (msg: TelegramBot.Message, _match: RegExpExecArray | null) => {
-    const args = msg.text?.split(" ") ?? [];
-    const name = args[1];
-    const url = args[2];
-    if (!name || !url) {
-      throw new Error("name or url is empty");
+    const text = msg.text ?? "";
+    const [command, url, ...descriptionParts] = text.split(" ");
+    if (!url) {
+      throw new Error("url is empty");
     }
+    const description = descriptionParts.join(" ").trim();
     const id = channelDB.addChannel({
-      name,
+      description,
       url,
     });
-    this.bot.sendMessage(msg.chat.id, `Added channel ${name} (ID: ${id})`, {
+    this.bot.sendMessage(msg.chat.id, `Added channel ${description || "(no description)"} (ID: ${id})`, {
       protect_content: true,
     });
   };
