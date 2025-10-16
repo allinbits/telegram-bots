@@ -1,12 +1,11 @@
 import TelegramBot from "node-telegram-bot-api";
 
-import {
-  channelDB,
-} from "./db.ts";
+import { ChannelDB } from "./db.ts";
 
 export type ChannelBotOptions = {
   token: string
   owners: string[]
+  databasePath: string
 };
 
 type Command = {
@@ -22,12 +21,14 @@ export class ChannelBot {
   private bot: TelegramBot;
   private owners: Set<string>;
   private commands: Command[];
+  private channelDB: ChannelDB;
 
   constructor(options: ChannelBotOptions) {
     this.bot = new TelegramBot(options.token, {
       polling: true,
     });
     this.owners = new Set(options.owners);
+    this.channelDB = new ChannelDB(options.databasePath);
 
     this.commands = [
       {
@@ -110,7 +111,7 @@ export class ChannelBot {
   }
 
   private onListChannels = (msg: TelegramBot.Message) => {
-    const channels = channelDB.getChannels();
+    const channels = this.channelDB.getChannels();
     if (channels.length === 0) {
       this.bot.sendMessage(msg.chat.id, "No channels configured", {
         protect_content: true,
@@ -136,7 +137,7 @@ export class ChannelBot {
       throw new Error("url is empty");
     }
     const description = descriptionParts.join(" ").trim();
-    const id = channelDB.addChannel({
+    const id = this.channelDB.addChannel({
       description,
       url,
     });
@@ -151,7 +152,7 @@ export class ChannelBot {
     if (isNaN(channelId)) {
       throw new Error("channel_id is empty");
     }
-    channelDB.removeChannel(channelId);
+    this.channelDB.removeChannel(channelId);
     this.bot.sendMessage(msg.chat.id, `Removed channel ${channelId}`, {
       protect_content: true,
     });

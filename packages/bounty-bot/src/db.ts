@@ -20,8 +20,7 @@ export type Bounty = {
 export class BountyDB {
   private database: DatabaseSync;
 
-  constructor() {
-    const databasePath = process.env.BOUNTY_DATABASE_FILE || "data/bounties.db";
+  constructor(databasePath: string) {
     mkdirSync(path.dirname(databasePath), {
       recursive: true,
     });
@@ -124,5 +123,3 @@ CREATE TABLE IF NOT EXISTS recipients (
     this.database.prepare("UPDATE bounties SET completed = 1, completed_at = ?, recipient = ? WHERE id = ?").run(completedAt, recipient, id);
   }
 }
-
-export const bountyDB = new BountyDB();

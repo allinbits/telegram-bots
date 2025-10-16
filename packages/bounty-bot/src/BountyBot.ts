@@ -7,12 +7,14 @@ import {
   CosmosClient,
 } from "./CosmosClient.ts";
 import {
-  Bounty, bountyDB,
+  Bounty, BountyDB,
 } from "./db.ts";
 
 export type BountyBotOptions = {
   token: string
   owners: string[]
+  mnemonic: string
+  databasePath: string
 };
 
 type Command = {
@@ -29,13 +31,15 @@ export class BountyBot {
   private owners: Set<string>;
   private commands: Command[];
   private cosmos: CosmosClient;
+  private bountyDB: BountyDB;
 
   constructor(options: BountyBotOptions) {
     this.bot = new TelegramBot(options.token, {
       polling: true,
     });
     this.owners = new Set(options.owners);
-    this.cosmos = new CosmosClient(process.env.MNEMONIC || "");
+    this.cosmos = new CosmosClient(options.mnemonic);
+    this.bountyDB = new BountyDB(options.databasePath);
 
     this.commands = [
       {
@@ -184,7 +188,7 @@ export class BountyBot {
     if (amount[0].denom !== "uphoton") {
       throw new Error("Amount must be in uphoton");
     }
-    const id = bountyDB.addBounty(amount[0].amount, amount[0].denom, task);
+    const id = this.bountyDB.addBounty(amount[0].amount, amount[0].denom, task);
     this.bot.sendMessage(msg.chat.id, `Bounty created with ID: ${id}`, {
       parse_mode: "MarkdownV2",
       protect_content: true,
@@ -202,14 +206,14 @@ export class BountyBot {
     if (isNaN(bountyId) || !username) {
       throw new Error("bountyId or username is empty");
     }
-    const bounty = bountyDB.getBounty(bountyId);
+    const bounty = this.bountyDB.getBounty(bountyId);
     if (!bounty) {
       throw new Error("Bounty not found");
     }
     if (bounty.completed) {
       throw new Error("Bounty already completed");
     }
-    const recipientAddress = bountyDB.getRecipientByUsername(username);
+    const recipientAddress = this.bountyDB.getRecipientByUsername(username);
     if (!recipientAddress) {
       throw new Error("Recipient not registered");
     }
@@ -221,7 +225,7 @@ export class BountyBot {
         amount: bounty.amount,
       },
     ]);
-    bountyDB.markBountyCompleted(bountyId, username);
+    this.bountyDB.markBountyCompleted(bountyId, username);
     this.bot.sendMessage(
       msg.chat.id,
       `Bounty ${bountyId} marked as completed and paid to @${username}\n\nTransaction: https://www.mintscan.io/atomone/tx/${txHash}`,
@@ -241,7 +245,7 @@ export class BountyBot {
     if (isNaN(bountyId)) {
       throw new Error("bountyId is empty");
     }
-    bountyDB.deleteBounty(bountyId);
+    this.bountyDB.deleteBounty(bountyId);
     this.bot.sendMessage(msg.chat.id, `Bounty ${bountyId} deleted`, {
       protect_content: true,
     });
@@ -252,7 +256,7 @@ export class BountyBot {
    * Expected format: /bounties
    */
   private onListBounties = (msg: TelegramBot.Message) => {
-    const bounties = bountyDB.getBounties();
+    const bounties = this.bountyDB.getBounties();
     if (bounties.length === 0) {
       this.bot.sendMessage(msg.chat.id, "No active bounties", {
         protect_content: true,
@@ -325,8 +329,8 @@ export class BountyBot {
     if (amount[0].denom !== "uphoton") {
       throw new Error("Amount must be in uphoton");
     }
-    bountyDB.updateBountyAmount(bountyId, amount[0].amount, amount[0].denom);
-    bountyDB.updateBountyDescription(bountyId, description);
+    this.bountyDB.updateBountyAmount(bountyId, amount[0].amount, amount[0].denom);
+    this.bountyDB.updateBountyDescription(bountyId, description);
     this.bot.sendMessage(msg.chat.id, `Bounty with ID: ${bountyId} updated`, {
       protect_content: true,
     });
@@ -343,7 +347,7 @@ export class BountyBot {
     }
     if (!msg.from?.username) {
       if (msg.from?.id) {
-        bountyDB.registerRecipient("TGID:" + msg.from.id.toString(), address);
+        this.bountyDB.registerRecipient("TGID:" + msg.from.id.toString(), address);
         const sent = await this.bot.sendMessage(
           msg.chat.id,
           `Registered ${address} for user with ID: ${msg.from.id.toString()}`,
@@ -363,7 +367,7 @@ export class BountyBot {
       }
     }
     else {
-      bountyDB.registerRecipient(msg.from.username, address);
+      this.bountyDB.registerRecipient(msg.from.username, address);
       const sent = await this.bot.sendMessage(
         msg.chat.id,
         `Registered ${address} for @${msg.from.username}`,

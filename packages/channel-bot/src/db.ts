@@ -1,10 +1,6 @@
-import {
-  mkdirSync,
-} from "node:fs";
 import path from "node:path";
-import {
-  DatabaseSync,
-} from "node:sqlite";
+import { mkdirSync } from "node:fs";
+import { DatabaseSync} from "node:sqlite";
 
 // Define the Channel type
 export type Channel = {
@@ -16,8 +12,7 @@ export type Channel = {
 export class ChannelDB {
   private database: DatabaseSync;
 
-  constructor() {
-    const databasePath = process.env.CHANNELS_DATABASE_FILE || "data/channels.db";
+  constructor(databasePath: string) {
     mkdirSync(path.dirname(databasePath), {
       recursive: true,
     });
@@ -51,5 +46,3 @@ CREATE TABLE IF NOT EXISTS channels (
     this.database.prepare("DELETE FROM channels WHERE id = ?").run(id);
   }
 }
-
-export const channelDB = new ChannelDB();
