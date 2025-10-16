@@ -10,6 +10,8 @@ services:
       target: bountybot
     restart: unless-stopped
     tty: true
+    env_file:
+      - .env
     environment:
       RPC_ENDPOINT: https://atomone-rpc.allinbits.com/
       MNEMONIC: 
@@ -26,6 +28,8 @@ services:
       target: channelbot
     restart: unless-stopped
     tty: true
+    env_file:
+      - .env
     environment:
       OWNERS: jaekwon777,albttx,clockworkgr
       # TG_TOKEN: ""

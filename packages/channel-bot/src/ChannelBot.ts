@@ -33,24 +33,32 @@ export class ChannelBot {
     this.commands = [
       {
         command: "channels",
-        description: "List channels",
+        description: "List channels for this chat's scope",
         regex: /^\/channels/,
         usage: "Usage: /channels",
         function: this.onListChannels,
       },
       {
-        command: "channels_add",
-        description: "Add channel (owners only)",
-        regex: /^\/channels_add (.+)/,
-        usage: "Usage: /channels_add <url> <description...>",
+        command: "channel_link",
+        description: "Link this chat to a scope (owners only)",
+        regex: /^\/channel_link (.+)/,
+        usage: "Usage: /channel_link <scope_name>",
+        function: this.onLinkChat,
+        ownerOnly: true,
+      },
+      {
+        command: "channel_add",
+        description: "Add channel to scope (owners only)",
+        regex: /^\/channel_add (.+)/,
+        usage: "Usage: /channel_add <scope> <url> <description...>",
         function: this.onAddChannel,
         ownerOnly: true,
       },
       {
-        command: "channels_remove",
-        description: "Remove channel (owners only)",
-        regex: /^\/channels_remove (.+)/,
-        usage: "Usage: /channels_remove <channel_id>",
+        command: "channel_remove",
+        description: "Remove channel in scope (owners only)",
+        regex: /^\/channel_remove (.+)/,
+        usage: "Usage: /channel_remove <channel_id> <scope>",
         function: this.onRemoveChannel,
         ownerOnly: true,
       },
@@ -111,18 +119,20 @@ export class ChannelBot {
   }
 
   private onListChannels = (msg: TelegramBot.Message) => {
-    const channels = this.channelDB.getChannels();
+    const channels = this.channelDB.getChannelByTelegramChatId(msg.chat.id);
+    
     if (channels.length === 0) {
-      this.bot.sendMessage(msg.chat.id, "No channels configured", {
+      this.bot.sendMessage(msg.chat.id, `No channels configured for this chat`, {
         protect_content: true,
       });
       return;
     }
-    let response = "Channels:\n";
+    
+    let response = ``;
     for (const ch of channels) {
       response += `${ch.id}. ${ch.description}\n${ch.url}\n`;
     }
-    response += "\nBeware, the beast makes fake $ATONE channels to mislead users. If you see any, please report them to the main channel.";
+
     this.bot.sendMessage(msg.chat.id, response, {
       parse_mode: "Markdown",
       disable_web_page_preview: true,
@@ -132,16 +142,39 @@ export class ChannelBot {
 
   private onAddChannel = (msg: TelegramBot.Message, _match: RegExpExecArray | null) => {
     const text = msg.text ?? "";
-    const [command, url, ...descriptionParts] = text.split(" ");
+    const [command, scopeName, url, ...descriptionParts] = text.split(" ");
+    const description = descriptionParts.join(" ").trim();
+    if (!scopeName) {
+      throw new Error("scope is empty");
+    }
     if (!url) {
       throw new Error("url is empty");
     }
-    const description = descriptionParts.join(" ").trim();
-    const id = this.channelDB.addChannel({
+
+    const scope = this.channelDB.getScope(scopeName, msg.chat.id);
+    if (!scope) {
+      throw new Error("chat is not linked to any scope");
+    }
+
+    this.channelDB.addChannel({
+      scope_id: scope.id,
       description,
       url,
     });
-    this.bot.sendMessage(msg.chat.id, `Added channel ${description || "(no description)"} (ID: ${id})`, {
+  
+    this.bot.sendMessage(msg.chat.id, `Added channel successfully`, {
+      protect_content: true,
+    });
+  };
+
+  private onLinkChat = (msg: TelegramBot.Message, _match: RegExpExecArray | null) => {
+    const text = msg.text ?? "";
+    const [command, scopeName] = text.split(" ");
+    if (!scopeName) {
+      throw new Error("scope_name is empty");
+    }
+    this.channelDB.linkChatToScope(msg.chat.id, scopeName);
+    this.bot.sendMessage(msg.chat.id, `Linked this chat to scope '${scopeName}'`, {
       protect_content: true,
     });
   };
@@ -149,11 +182,15 @@ export class ChannelBot {
   private onRemoveChannel = (msg: TelegramBot.Message, _match: RegExpExecArray | null) => {
     const args = msg.text?.split(" ") ?? [];
     const channelId = parseInt(args[1]);
+    const scope = args[2];
     if (isNaN(channelId)) {
       throw new Error("channel_id is empty");
     }
-    this.channelDB.removeChannel(channelId);
-    this.bot.sendMessage(msg.chat.id, `Removed channel ${channelId}`, {
+    if (!scope) {
+      throw new Error("scope is empty");
+    }
+    this.channelDB.removeChannelInScope(channelId, scope);
+    this.bot.sendMessage(msg.chat.id, `Removed channel ${channelId} from scope '${scope}'`, {
       protect_content: true,
     });
   };
