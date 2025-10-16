@@ -14,9 +14,10 @@ services:
       RPC_ENDPOINT: https://atomone-rpc.allinbits.com/
       MNEMONIC: 
       OWNERS: jaekwon777,albttx,clockworkgr
-      TG_TOKEN: 8303646007:AAHC4EpM_4G2Fb1cvvdqYzn5NtAiMd2d0RQ
+      # TG_TOKEN: ""
+      DATABASE_PATH: /data/bounties.db
     # volumes:
-    #   - bounties:/usr/src/app/data
+    #   - bounties:/data
 
   channelbot:
     image: ghcr.io/allinbits/telegram-bots/channelbot:dev
@@ -28,7 +29,6 @@ services:
     environment:
       OWNERS: jaekwon777,albttx,clockworkgr
       # TG_TOKEN: ""
-      TG_TOKEN: 8303646007:AAHC4EpM_4G2Fb1cvvdqYzn5NtAiMd2d0RQ
-      CHANNELS_DATABASE_FILE: data/channels.db
+      DATABASE_PATH: /data/channels.db
     # volumes:
-    #   - channels:/usr/src/app/data
+    #   - channels:/data
