@@ -67,39 +67,10 @@ export class ChannelBot {
     ];
   }
 
-  public async start(): Promise<void> {
-    await this.registerCommands();
-
-    this.commands.forEach(cmd => this.bot.onText(cmd.regex, async (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
-      if (cmd.ownerOnly && !this.isOwner(msg.from?.username ?? "")) {
-        this.bot.sendMessage(msg.chat.id, "This command is only available to owners", {
-          protect_content: true,
-        });
-        return;
-      }
-
-      try {
-        await cmd.function(msg, match);
-      }
-      catch (error) {
-        console.error(`[ERROR] ${cmd.command}: ${msg.text}`, error);
-        this.bot.sendMessage(msg.chat.id, `${cmd.usage}\n\nError: ${(error as Error).message}`, {
-          parse_mode: "Markdown",
-          protect_content: true,
-        });
-      }
-    }));
-  }
-
-  private isOwner = (username?: string | null): boolean => {
-    if (!username) return false;
-    return this.owners.has(username);
-  };
-
   private async registerCommands(): Promise<void> {
-    const commandsForTelegram: TelegramBot.BotCommand[] = this.commands.map(c => ({
-      command: c.command,
-      description: c.description,
+    const commandsForTelegram: TelegramBot.BotCommand[] = this.commands.map(cmd => ({
+      command: cmd.command,
+      description: cmd.description,
     }));
 
     try {
@@ -119,6 +90,36 @@ export class ChannelBot {
       console.error("Failed to set bot commands:", err);
     }
   }
+
+  public async start(): Promise<void> {
+    await this.registerCommands();
+
+    this.commands.forEach(cmd => this.bot.onText(cmd.regex, async (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
+      if (cmd.ownerOnly && !this.isOwner(msg.from?.username ?? "")) {
+        this.bot.sendMessage(msg.chat.id, "This command is only available to owners", {
+          protect_content: true,
+        });
+        return;
+      }
+
+      try {
+        if (!match) {
+          throw new Error("Message don't match regex");
+        }
+
+        await cmd.function(msg, match);
+      }
+      catch (error) {
+        console.error(`[ERROR] ${cmd.command}: ${msg.text}`, error);
+        this.bot.sendMessage(msg.chat.id, `${cmd.usage}\n\nError: ${(error as Error).message}`);
+      }
+    }));
+  }
+
+  private isOwner = (username?: string | null): boolean => {
+    if (!username) return false;
+    return this.owners.has(username);
+  };
 
   private onListChannels = (msg: TelegramBot.Message) => {
     const channels = this.channelDB.getChannelByTelegramChatId(msg.chat.id);

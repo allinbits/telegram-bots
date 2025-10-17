@@ -16,7 +16,7 @@ services:
       RPC_ENDPOINT: https://atomone-rpc.allinbits.com/
       MNEMONIC: 
       OWNERS: jaekwon777,albttx,clockworkgr
-      # TG_TOKEN: ""
+      TG_TOKEN: $TG_TOKEN_BOUNTYBOT
       DATABASE_PATH: /data/bounties.db
     # volumes:
     #   - bounties:/data
@@ -32,7 +32,7 @@ services:
       - .env
     environment:
       OWNERS: jaekwon777,albttx,clockworkgr
-      # TG_TOKEN: ""
+      TG_TOKEN: $TG_TOKEN_CHANNELBOT
       DATABASE_PATH: /data/channels.db
     # volumes:
     #   - channels:/data
