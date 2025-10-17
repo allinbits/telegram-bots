@@ -2,3 +2,5 @@ dist
 lib
 node_modules
 .pnpm-store
+.env
+*.db

@@ -127,10 +127,7 @@ export class BountyBot {
       }
       catch (error) {
         console.error(`[ERROR] ${cmd.command}: ${msg.text}`, error);
-        this.bot.sendMessage(msg.chat.id, `${cmd.usage}\n\nError: ${(error as Error).message}`, {
-          parse_mode: "Markdown",
-          protect_content: true,
-        });
+        this.bot.sendMessage(msg.chat.id, `${cmd.usage}\n\nError: ${(error as Error).message}`);
       }
     }));
   }
