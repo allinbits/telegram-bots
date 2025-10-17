@@ -110,12 +110,4 @@ CREATE TABLE IF NOT EXISTS channels (
     ).get(scopeName) as Scope | undefined;
     return row ?? null;
   }
-
-  public getChannelsForChat(chatId: string): Channel[] {
-    const scope = this.getChatScopeByChatId(chatId);
-    if (!scope) {
-      return [];
-    }
-    return this.getChannels(scope.name);
-  }
 }
