@@ -1,6 +1,8 @@
 import TelegramBot from "node-telegram-bot-api";
 
-import { ChannelDB } from "./db.ts";
+import {
+  ChannelDB,
+} from "./db.ts";
 
 export type ChannelBotOptions = {
   token: string
@@ -120,15 +122,15 @@ export class ChannelBot {
 
   private onListChannels = (msg: TelegramBot.Message) => {
     const channels = this.channelDB.getChannelByTelegramChatId(msg.chat.id);
-    
+
     if (channels.length === 0) {
-      this.bot.sendMessage(msg.chat.id, `No channels configured for this chat`, {
+      this.bot.sendMessage(msg.chat.id, "No channels configured for this chat", {
         protect_content: true,
       });
       return;
     }
-    
-    let response = ``;
+
+    let response = "";
     for (const ch of channels) {
       response += `${ch.id}. ${ch.description}\n${ch.url}\n`;
     }
@@ -142,7 +144,7 @@ export class ChannelBot {
 
   private onAddChannel = (msg: TelegramBot.Message, _match: RegExpExecArray | null) => {
     const text = msg.text ?? "";
-    const [command, scopeName, url, ...descriptionParts] = text.split(" ");
+    const [_command, scopeName, url, ...descriptionParts] = text.split(" ");
     const description = descriptionParts.join(" ").trim();
     if (!scopeName) {
       throw new Error("scope is empty");
@@ -161,15 +163,15 @@ export class ChannelBot {
       description,
       url,
     });
-  
-    this.bot.sendMessage(msg.chat.id, `Added channel successfully`, {
+
+    this.bot.sendMessage(msg.chat.id, "Added channel successfully", {
       protect_content: true,
     });
   };
 
   private onLinkChat = (msg: TelegramBot.Message, _match: RegExpExecArray | null) => {
     const text = msg.text ?? "";
-    const [command, scopeName] = text.split(" ");
+    const [_command, scopeName] = text.split(" ");
     if (!scopeName) {
       throw new Error("scope_name is empty");
     }

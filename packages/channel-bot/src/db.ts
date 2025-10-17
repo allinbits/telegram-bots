@@ -1,13 +1,16 @@
+import {
+  mkdirSync,
+} from "node:fs";
 import path from "node:path";
-import { mkdirSync } from "node:fs";
-import { DatabaseSync} from "node:sqlite";
+import {
+  DatabaseSync,
+} from "node:sqlite";
 
 export type Scope = {
   id?: number
   name: string
   tg_chat_id: number
 };
-
 
 // Define the Channel type
 export type Channel = {
@@ -72,7 +75,7 @@ CREATE TABLE IF NOT EXISTS channels (
       throw new Error("scope_id is required");
     }
     this.database.prepare(
-      "INSERT INTO channels (scope_id, description, url) VALUES (?, ?, ?)"
+      "INSERT INTO channels (scope_id, description, url) VALUES (?, ?, ?)",
     ).run(channel.scope_id, channel.description, channel.url);
   }
 
@@ -86,27 +89,26 @@ CREATE TABLE IF NOT EXISTS channels (
 
   public linkChatToScope(tgChatId: number, scopeName: string): void {
     this.database.prepare(
-      "INSERT INTO scopes (name, tg_chat_id) VALUES (?, ?)"
+      "INSERT INTO scopes (name, tg_chat_id) VALUES (?, ?)",
     ).run(scopeName, tgChatId);
   }
 
   public getChatScopeByChatId(chatId: string): Scope | null {
     const row = this.database.prepare(
-      "SELECT id, name, tg_chat_id FROM scopes WHERE tg_chat_id = ?"
+      "SELECT id, name, tg_chat_id FROM scopes WHERE tg_chat_id = ?",
     ).get(chatId) as Scope | undefined;
     return row ?? null;
   }
 
-
   public getScope(name: string, telegramChatId: number): Scope | null {
     return this.database.prepare(
-      "SELECT id, name, tg_chat_id FROM scopes WHERE name = ? AND tg_chat_id = ?"
+      "SELECT id, name, tg_chat_id FROM scopes WHERE name = ? AND tg_chat_id = ?",
     ).get(name, telegramChatId) as Scope | null;
   }
 
   public getChatScopeByName(scopeName: string): Scope | null {
     const row = this.database.prepare(
-      "SELECT id, name, tg_chat_id FROM scopes WHERE name = ?"
+      "SELECT id, name, tg_chat_id FROM scopes WHERE name = ?",
     ).get(scopeName) as Scope | undefined;
     return row ?? null;
   }
