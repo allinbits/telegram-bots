@@ -64,6 +64,13 @@ export class ChannelBot {
         function: this.onRemoveChannel,
         ownerOnly: true,
       },
+      {
+        command: "channel_help",
+        description: "Show help",
+        regex: /^\/channel_help/,
+        usage: "Usage: /channel_help",
+        function: this.onChannelHelp,
+      },
     ];
   }
 
@@ -198,20 +205,20 @@ export class ChannelBot {
     });
   };
 
-  //   /**
-  //    * Display channel information and links
-  //    * Expected format: /channels
-  //    */
-  //   private onChannels = (msg: TelegramBot.Message) => {
-  //     const response = `This channel will begin splitting into sepate groups. It is a work in progress, please stay tuned. Here are the current groups:
+  /**
+   * Display help text for all channel commands
+   * Expected format: /channel_help
+   */
+  private onChannelHelp = (msg: TelegramBot.Message) => {
+    let response = "Hi, I'm the Channel bot. I'm here to help manage channel links and scopes.\n\n";
 
-  // 1. $ATONE 144,000!: main channel. Command center for AtomOne and gno.land - https://t.me/+HwiCPxZa58kzNTJh
-  // 2. $ATONE PARANORMAL! - https://t.me/+igbS2FqSyEdkMmQx
-  // 3. $ATONE PRICE! - https://t.me/+cVZ8Nhn7GHwwOGMx
-  // 4. $ATONE GEOPOLITICS! - https://t.me/+jwoTxS4JoUg4M2Ux
-  // 5. $ATONE GOD/FATHER/ABBAH/ALLAH/JESUS! - https://t.me/+Q3LsSoGUEb85YTA5
+    for (const command of this.commands) {
+      response += `/${command.command} - ${command.description}\n`;
+      response += `${command.usage}\n\n`;
+    }
+    this.bot.sendMessage(msg.chat.id, response, {
+      disable_web_page_preview: true,
+    });
+  };
 
-// Beware, the beast makes fake $ATONE channels to mislead users. If you see any, please report them to the main channel.`;
-//     this.bot.sendMessage(msg.chat.id, response, { protect_content: true });
-//   };
 }
