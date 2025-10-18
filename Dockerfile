@@ -19,6 +19,7 @@ RUN pnpm deploy --filter=@allinbits/channel-bot --prod /prod/channel-bot
 # BountyBot
 FROM build AS bountybot
 WORKDIR /app
+RUN apk add --no-cache sqlite
 COPY --from=build /prod/bounty-bot /app
 ENV MNEMONIC=""
 ENV RPC_ENDPOINT="https://atomone-rpc.allinbits.com/"
@@ -29,6 +30,7 @@ ENTRYPOINT ["node", "dist/index.js"]
 # ChannelBot
 FROM build AS channelbot
 WORKDIR /app
+RUN apk add --no-cache sqlite
 COPY --from=build /prod/channel-bot /app
 ENV TG_TOKEN=""
 ENV OWNERS=""
