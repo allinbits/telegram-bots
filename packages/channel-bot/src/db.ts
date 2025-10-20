@@ -113,4 +113,10 @@ WHERE s2.tg_chat_id = ?;
     ).get(scopeName) as Scope | undefined;
     return row ?? null;
   }
+
+  public getScopesByTelegramChatId(tgChatId: number): Scope[] {
+    return this.database.prepare(
+      "SELECT id, name, tg_chat_id FROM scopes WHERE tg_chat_id = ?",
+    ).all(tgChatId) as Scope[];
+  }
 }

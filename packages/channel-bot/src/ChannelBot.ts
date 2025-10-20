@@ -36,7 +36,7 @@ export class ChannelBot {
       {
         command: "channels",
         description: "List channels for this chat's scope",
-        regex: /^\/channels/,
+        regex: /^\/channels(.*)/,
         usage: "Usage: /channels",
         function: this.onListChannels,
       },
@@ -63,6 +63,13 @@ export class ChannelBot {
         usage: "Usage: /channel_remove <channel_id> <scope>",
         function: this.onRemoveChannel,
         ownerOnly: true,
+      },
+      {
+        command: "channel_show",
+        description: "Show current channel scopes for this chat",
+        regex: /^\/channel_show/,
+        usage: "Usage: /channel_show",
+        function: this.onChannelShow,
       },
       {
         command: "channel_help",
@@ -102,18 +109,21 @@ export class ChannelBot {
     await this.registerCommands();
 
     this.commands.forEach(cmd => this.bot.onText(cmd.regex, async (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
+      console.log(`[INFO]: msg received ${msg.text} from ${msg.from?.username ?? msg.from?.id?.toString()}`);
+
       if (cmd.ownerOnly && !this.isOwner(msg.from?.username ?? "")) {
+        console.error(`[ERROR]: ${msg.from?.username ?? msg.from?.id?.toString()} is not an owner`);
         this.bot.sendMessage(msg.chat.id, "This command is only available to owners", {
           protect_content: true,
         });
         return;
       }
 
+
       try {
         if (!match) {
           throw new Error("Message don't match regex");
         }
-
         await cmd.function(msg, match);
       }
       catch (error) {
@@ -142,11 +152,22 @@ export class ChannelBot {
     for (const ch of channels) {
       response += `${ch.id}. ${ch.description}\n${ch.url}\n`;
     }
+    // Escape MarkdownV2 special characters in the response for Telegram
+    const escapeMarkdownV2 = (text: string): string => {
+      return text
+        .replace(/([_*\[\]()~`>#+\-=|{}\.!\\])/g, "\\$1");
+    };
+    response = escapeMarkdownV2(response);
 
+    // TelegramBot.escapeMarkdownV2(response);
+    // response = escapeMarkdownV2(response);
     this.bot.sendMessage(msg.chat.id, response, {
-      parse_mode: "Markdown",
-      disable_web_page_preview: true,
-      protect_content: true,
+      parse_mode: "MarkdownV2",
+      disable_web_page_preview: false,
+      protect_content: false,
+      link_preview_options: {
+        is_disabled: true,
+      },
     });
   };
 
@@ -201,6 +222,26 @@ export class ChannelBot {
     }
     this.channelDB.removeChannelInScope(channelId, scope);
     this.bot.sendMessage(msg.chat.id, `Removed channel ${channelId} from scope '${scope}'`, {
+      protect_content: true,
+    });
+  };
+
+  private onChannelShow = (msg: TelegramBot.Message) => {
+    const scopes = this.channelDB.getScopesByTelegramChatId(msg.chat.id);
+
+    if (scopes.length === 0) {
+      this.bot.sendMessage(msg.chat.id, "No scopes configured for this chat", {
+        protect_content: true,
+      });
+      return;
+    }
+
+    let response = "Current scopes for this chat:\n";
+    for (const scope of scopes) {
+      response += `• ${scope.name}\n`;
+    }
+
+    this.bot.sendMessage(msg.chat.id, response, {
       protect_content: true,
     });
   };
