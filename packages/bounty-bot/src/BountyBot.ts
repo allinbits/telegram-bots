@@ -45,7 +45,7 @@ export class BountyBot {
       {
         command: "bounty",
         description: "Create a bounty (owners only)",
-        regex: /^\/bounty (.+)/,
+        regex: /^\/bounty(.+)/,
         ownerOnly: true,
         usage: "Usage: /bounty <amount><denom> <task>",
         function: this.onCreateBounty,
@@ -67,7 +67,7 @@ export class BountyBot {
       {
         command: "bounty_update",
         description: "Update bounty amount (owners only)",
-        regex: /^\/bounty_update (.+)/,
+        regex: /^\/bounty_update(.+)/,
         ownerOnly: true,
         usage: "Usage: /bounty_update <bounty_id> <amount><denom> <description>(owners only)",
         function: this.onUpdateBounty,
@@ -75,7 +75,7 @@ export class BountyBot {
       {
         command: "bounty_delete",
         description: "Delete a bounty (owners only)",
-        regex: /^\/bounty_delete (.+)/,
+        regex: /^\/bounty_delete(.+)/,
         ownerOnly: true,
         usage: "Usage: /bounty_delete <bounty_id>",
         function: this.onDeleteBounty,
@@ -83,7 +83,7 @@ export class BountyBot {
       {
         command: "bounty_complete",
         description: "Complete and pay bounty (owners only)",
-        regex: /^\/bounty_complete (.+)/,
+        regex: /^\/bounty_complete(.+)/,
         ownerOnly: true,
         usage: "Usage: /bounty_complete <bounty_id> <username>",
         function: this.onCompleteBounty,
@@ -91,7 +91,7 @@ export class BountyBot {
       {
         command: "register",
         description: "Register your ATONE address",
-        regex: /^\/register (.+)/,
+        regex: /^\/register(.+)/,
         usage: "Usage: /register <address>",
         function: this.onRegister,
       },

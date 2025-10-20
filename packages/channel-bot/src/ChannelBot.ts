@@ -43,7 +43,7 @@ export class ChannelBot {
       {
         command: "channel_link",
         description: "Link this chat to a scope (owners only)",
-        regex: /^\/channel_link (.+)/,
+        regex: /^\/channel_link(.+)/,
         usage: "Usage: /channel_link <scope_name>",
         function: this.onLinkChat,
         ownerOnly: true,
@@ -51,7 +51,7 @@ export class ChannelBot {
       {
         command: "channel_add",
         description: "Add channel to scope (owners only)",
-        regex: /^\/channel_add (.+)/,
+        regex: /^\/channel_add(.+)/,
         usage: "Usage: /channel_add <scope> <url> <description...>",
         function: this.onAddChannel,
         ownerOnly: true,
@@ -59,7 +59,7 @@ export class ChannelBot {
       {
         command: "channel_remove",
         description: "Remove channel in scope (owners only)",
-        regex: /^\/channel_remove (.+)/,
+        regex: /^\/channel_remove(.+)/,
         usage: "Usage: /channel_remove <channel_id> <scope>",
         function: this.onRemoveChannel,
         ownerOnly: true,
