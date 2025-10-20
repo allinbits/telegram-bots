@@ -57,14 +57,15 @@ CREATE TABLE IF NOT EXISTS channels (
 
   public getChannelByTelegramChatId(tgChatId: number): Channel[] {
     return this.database.prepare(`
-      SELECT
-        channels.id,
-        scopes.name as scope_name,
-        channels.description,
-        channels.url
-      FROM channels
-      INNER JOIN scopes ON channels.scope_id = scopes.id
-      WHERE scopes.tg_chat_id = ?
+SELECT
+  c1.id,
+  s1.name as scope_name,
+  c1.description,
+  c1.url
+FROM scopes s1
+JOIN scopes s2 ON s1.name = s2.name
+JOIN channels c1 ON s1.id = c1.scope_id
+WHERE s2.tg_chat_id = ?;
     `).all(tgChatId) as Channel[];
   }
 
