@@ -17,6 +17,14 @@ export type Bounty = {
   recipient: string | null
 };
 
+export type Claim = {
+  id: number
+  bounty_id: number
+  username: string
+  proof: string | null
+  created_at: number
+};
+
 export class BountyDB {
   private database: DatabaseSync;
 
@@ -37,10 +45,23 @@ CREATE TABLE IF NOT EXISTS bounties (
   completed_at INTEGER,
   recipient TEXT
 );
+
 CREATE TABLE IF NOT EXISTS recipients (
   id INTEGER PRIMARY KEY,
   username TEXT NOT NULL,
   address TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS claims (
+  id INTEGER PRIMARY KEY,
+  bounty_id INTEGER NOT NULL,
+  username  TEXT NOT NULL,
+  proof     TEXT,
+
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  
+  UNIQUE (bounty_id, username),
+  FOREIGN KEY (bounty_id) REFERENCES bounties(id)
 );
 `;
 
@@ -86,6 +107,14 @@ CREATE TABLE IF NOT EXISTS recipients (
     else {
       this.database.prepare("INSERT INTO recipients (username, address) VALUES (?, ?)").run(username, address);
     }
+  }
+
+  public claimBounty(bountyId: number, username: string, proof: string): void {
+    this.database.prepare("INSERT OR REPLACE INTO claims (bounty_id, username, proof) VALUES (?, ?, ?)").run(bountyId, username, proof);
+  }
+
+  public getClaims(): Claim[] {
+    return this.database.prepare("SELECT * FROM claims").all() as unknown as Claim[];
   }
 
   public getRecipientByUsername(username: string): string | null {

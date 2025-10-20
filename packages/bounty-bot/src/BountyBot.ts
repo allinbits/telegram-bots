@@ -8,6 +8,7 @@ import {
 } from "./CosmosClient.ts";
 import {
   Bounty, BountyDB,
+  Claim,
 } from "./db.ts";
 
 export type BountyBotOptions = {
@@ -24,6 +25,11 @@ type Command = {
   function: (msg: TelegramBot.Message, match: RegExpExecArray | null) => void
   usage: string
   ownerOnly?: boolean
+};
+
+const escapeMarkdownV2 = (text: string): string => {
+  return text
+    .replace(/([_*\[\]()~`>#+\-=|{}\.!\\])/g, "\\$1");
 };
 
 export class BountyBot {
@@ -45,7 +51,7 @@ export class BountyBot {
       {
         command: "bounty",
         description: "Create a bounty (owners only)",
-        regex: /^\/bounty(.+)/,
+        regex: /^\/bounty (.+)/,
         ownerOnly: true,
         usage: "Usage: /bounty <amount><denom> <task>",
         function: this.onCreateBounty,
@@ -71,6 +77,13 @@ export class BountyBot {
         ownerOnly: true,
         usage: "Usage: /bounty_update <bounty_id> <amount><denom> <description>(owners only)",
         function: this.onUpdateBounty,
+      },
+      {
+        command: "bounty_claim",
+        description: "Claim a bounty",
+        regex: /^\/bounty_claim(.+)/,
+        usage: "Usage: /bounty_claim <bounty_id> <proof>",
+        function: this.onClaimBounty,
       },
       {
         command: "bounty_delete",
@@ -192,6 +205,34 @@ export class BountyBot {
     });
   };
 
+
+  /**
+   * Claim a bounty
+   * Expected format: /bounty_claim <bounty_id> <proof>
+   */
+  private onClaimBounty = async (msg: TelegramBot.Message, _match: RegExpExecArray | null) => {
+    const [_command, bountyId, ...proofParts] = msg.text?.split(" ") ?? [];
+    const proof = proofParts.join(" ");
+
+    if (isNaN(parseInt(bountyId)) || !proof) {
+      throw new Error("bountyId is empty");
+    }
+
+    const username = msg.from?.username ?? "";
+    if (!username) {
+      throw new Error("Username is empty");
+    }
+
+
+    this.bountyDB.claimBounty(parseInt(bountyId), username, proof);
+
+    this.bot.sendMessage(msg.chat.id, `Bounty ${bountyId} claimed by [@${username}](tg://user?id=${msg.from?.id})`, {
+      protect_content: true,
+      parse_mode: "MarkdownV2",
+    });
+  };
+
+
   /**
    * Complete a bounty and trigger on-chain payment
    * Expected format: /bounty_complete <bounty_id> <username>
@@ -253,7 +294,13 @@ export class BountyBot {
    * Expected format: /bounties
    */
   private onListBounties = (msg: TelegramBot.Message) => {
-    const bounties = this.bountyDB.getBounties();
+    const [_command, bountyId] = msg.text?.split(" ") ?? [];
+
+    let bounties = this.bountyDB.getBounties();
+
+    if (bountyId) {
+      bounties = bounties.filter((bounty: Bounty) => bounty.id.toString() === bountyId);
+    }
     if (bounties.length === 0) {
       this.bot.sendMessage(msg.chat.id, "No active bounties", {
         protect_content: true,
@@ -261,6 +308,8 @@ export class BountyBot {
       return;
     }
     else {
+      const claims = this.bountyDB.getClaims();
+
       let response = "Active Bounties:\n\n";
       bounties.forEach((bounty: Bounty) => {
         let amt = bounty.amount;
@@ -274,7 +323,16 @@ export class BountyBot {
         response += "Task:\n";
         response += `${bounty.task}\n`;
         response += `Amount: **${amt} ${denom}**\n\n`;
+        if (claims.length > 0) {
+          response += "Claimed by:\n";
+          claims.forEach((claim: Claim) => {
+            if (claim.bounty_id === bounty.id) {
+              response += `  - [@${claim.username}](tg://user?id=${claim.id}) - ${claim.proof}\n`;
+            }
+          });
+        }
       });
+
       this.bot.sendMessage(msg.chat.id, response, {
         parse_mode: "Markdown",
         protect_content: true,
