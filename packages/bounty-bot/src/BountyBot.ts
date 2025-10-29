@@ -11,6 +11,8 @@ import {
   Claim,
 } from "./db.ts";
 
+const TELEGRAM_LIMIT_MESSAGE_LENGTH = 4096;
+
 export type BountyBotOptions = {
   token: string
   owners: string[]
@@ -28,8 +30,7 @@ type Command = {
 };
 
 const escapeMarkdownV2 = (text: string): string => {
-  return text
-    .replace(/([_*\[\]()~`>#+\-=|{}\.!\\])/g, "\\$1");
+  return text.replace(/([_*\[\]()~`>#+\-=|{}\.!\\])/g, "\\$1");
 };
 
 export class BountyBot {
@@ -51,7 +52,7 @@ export class BountyBot {
       {
         command: "bounty",
         description: "Create a bounty (owners only)",
-        regex: /^\/bounty (.+)/,
+        regex: /^\/bounty(.+)/,
         ownerOnly: true,
         usage: "Usage: /bounty <amount><denom> <task>",
         function: this.onCreateBounty,
@@ -118,6 +119,18 @@ export class BountyBot {
     ];
   }
 
+  // private async sendMessage(chatId: number | string, texts: string[], options?: TelegramBot.SendMessageOptions) {
+  //   for (const text of texts) {
+  //     try {
+  //       await this.bot.sendMessage(chatId, text, options);
+  //     }
+  //     catch (error) {
+  //       console.error(`[ERROR] sendMessage: ${text}`, error as Error);
+  //       await this.bot.sendMessage(chatId, `error: ${text}`, options);
+  //     }
+  //   }
+  // };
+  
   public async start(): Promise<void> {
     await this.registerCommands();
 
@@ -293,7 +306,7 @@ export class BountyBot {
    * List all active bounties
    * Expected format: /bounties
    */
-  private onListBounties = (msg: TelegramBot.Message) => {
+  private onListBounties = async (msg: TelegramBot.Message) => {
     const [_command, bountyId] = msg.text?.split(" ") ?? [];
 
     let bounties = this.bountyDB.getBounties();
@@ -310,33 +323,50 @@ export class BountyBot {
     else {
       const claims = this.bountyDB.getClaims();
 
-      let response = "Active Bounties:\n\n";
+      const responses: string[] = [];
+      
+      let response = "";
       bounties.forEach((bounty: Bounty) => {
+        let bounty_msg = "";
         let amt = bounty.amount;
         let denom = bounty.denom;
         if (bounty.denom === "uphoton") {
           amt = "" + parseInt(bounty.amount) / 1000000;
           denom = "PHOTON";
+        } else if (bounty.denom === "uatone") {
+          amt = "" + parseInt(bounty.amount) / 1000000;
+          denom = "ATONE";
         }
-        response += "------------------------------------------------\n";
-        response += `ID: **${bounty.id}**\n`;
-        response += "Task:\n";
-        response += `${bounty.task}\n`;
-        response += `Amount: **${amt} ${denom}**\n\n`;
-        if (claims.length > 0) {
-          response += "Claimed by:\n";
-          claims.forEach((claim: Claim) => {
-            if (claim.bounty_id === bounty.id) {
-              response += `  - [@${claim.username}](tg://user?id=${claim.id}) - ${claim.proof}\n`;
-            }
+
+        const task = escapeMarkdownV2(bounty.task);
+        bounty_msg += `*${bounty.id}*\\. _*${amt} ${denom}*_ \\- ${task}\n\n`;
+        const claims_for_bounty = claims.filter((claim: Claim) => claim.bounty_id === bounty.id);
+        if (claims_for_bounty.length > 0) {
+        bounty_msg += "Claimed by:\n";
+          claims_for_bounty.forEach((claim: Claim) => {
+            bounty_msg += `  \\- [${escapeMarkdownV2(claim.username)}](https://t.me/${claim.username}) \\- ${escapeMarkdownV2(claim.proof ?? "")}\n`;
           });
+        }
+        response += bounty_msg;
+
+        if (response.length + bounty_msg.length > TELEGRAM_LIMIT_MESSAGE_LENGTH) {
+          responses.push(response);
+          response = "";
         }
       });
 
-      this.bot.sendMessage(msg.chat.id, response, {
-        parse_mode: "Markdown",
-        protect_content: true,
-      });
+      responses.push(response);
+
+      for (const response of responses) {
+        await this.bot.sendMessage(msg.chat.id, response, {
+          parse_mode: "MarkdownV2",
+          // protect_content: true,
+          disable_web_page_preview: true,
+          link_preview_options: {
+            is_disabled: true,
+          },
+        });
+      }
     }
   };
 
