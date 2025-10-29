@@ -52,7 +52,7 @@ export class BountyBot {
       {
         command: "bounty",
         description: "Create a bounty (owners only)",
-        regex: /^\/bounty(.+)/,
+        regex: /^\/bounty(@.*)? (.*)/,
         ownerOnly: true,
         usage: "Usage: /bounty <amount><denom> <task>",
         function: this.onCreateBounty,
