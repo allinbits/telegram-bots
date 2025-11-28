@@ -339,7 +339,10 @@ export class BountyBot {
         }
 
         const task = escapeMarkdownV2(bounty.task);
-        bounty_msg += `*${bounty.id}*\\. _*${amt} ${denom}*_ \\- ${task}\n\n`;
+        const escapedAmt = escapeMarkdownV2(amt);
+        const escapedDenom = escapeMarkdownV2(denom);
+        const escapedId = escapeMarkdownV2(bounty.id.toString());
+        bounty_msg += `*${escapedId}*\\. _*${escapedAmt} ${escapedDenom}*_ \\- ${task}\n\n`;
         const claims_for_bounty = claims.filter((claim: Claim) => claim.bounty_id === bounty.id);
         if (claims_for_bounty.length > 0) {
         bounty_msg += "Claimed by:\n";
